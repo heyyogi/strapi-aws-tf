@@ -42,15 +42,30 @@ resource "aws_instance" "strapi" {
   security_groups = [aws_security_group.strapi_sg.name]
 
 user_data = <<-EOF
-              #!/bin/bash
-              sudo apt update -y
-              sudo apt install -y nodejs npm
-              sudo npm install -g strapi@latest
-              git clone https://github.com/heyyogi/-strapi-app.git
-              cd strapi-app
-                npm install
-                npm run develop
-              EOF
+#!/bin/bash
+# Update packages
+sudo apt update -y
+sudo apt install -y nodejs npm
+
+# Install Strapi globally
+sudo npm install -g npx
+
+# Create Strapi project
+cd /home/ubuntu
+npx create-strapi-app strapi-app --quickstart --no-run
+
+# Move into project
+cd strapi-app
+
+# Install PM2 to keep Strapi running
+sudo npm install -g pm2
+
+# Start Strapi with PM2
+pm2 start npm --name "strapi" -- run develop
+pm2 startup systemd
+pm2 save
+EOF
+
     tags = {
         Name = "StrapiInstance"
     }
